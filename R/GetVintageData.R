@@ -1,0 +1,267 @@
+#' Get data in vintage analysis format
+#'
+#' This function prepares data for vintage analysis. Currently it supports only data stored in 
+#' PostgreSQL database. 
+#' 
+#' If successful, dataset with the following columns is returned: 
+#' \tabular{ll}{
+#' Column \tab Description\cr
+#' \code{[Slicers]} \tab Additional colums used for conditioning of vintages as used in \code{VintageUnitSQL}.\cr
+#' \code{distance} \tab Distance between vintage unit date and event date measured in time interval (currently month, quarter or year).\cr
+#' \code{vintage_unit_weight} \tab sum of vintage unit weights for given vintage at distance. Note that one vintage can
+#' have different values for different distances when no slicer is based on vintage unit date and with 
+#' granularity equal to time grouping of events (see examples to understand this better). In case when no
+#' weight is defined that values are equal as in column vintage_unit_count\cr
+#' \code{vintage_unit_count} \tab number (of rows) for given vintage at distance. Using same logic as vintage unit weight.\cr
+#' \code{event_weight} \tab Sum of event weights for given vintage at distance. If no weight is defined, than 1 is used (equal to 
+#' row count)\cr
+#' \code{event_weight_pct} \tab event_weight_pct / vintage_unit_weight\cr
+#' \code{event_weight_csum} \tab running 
+#' total of event weights for given vintage ordered by distance. If no slicer is based on vintage date 
+#' and with granularity equal to time grouping of events, than running total cannot be reproduced as running 
+#' total of event_weight! See examples to understand this better.\cr
+#' \code{event_weight_csum_pct} \tab a\cr
+#' \code{rn} \tab a\cr
+#' }
+#' This function is tested with PostgreSQL 9.1, but any version with window functions support should work.
+#'
+#' @param VintageUnitSQL Valid SQL statement. If \code{SQLModifier} is not used than at least the following 
+#' columns have to be in the result: \code{id, vintage_unit_date}. If vintage units should be weighted than 
+#' column \code{vintage_unit_weight} has to be as column in result. Result can contain any number of 
+#' additional columns. These columns are referred as \code{Slicers}. All 
+#' columns in result will be used to form vintages - every unique combination of \code{Slicers} 
+#' (all columns except \code{id, vintage_unit_date, vintage_unit_weight}) will be considered as one vintage.
+#' @param PerformanceEventSQL Valid SQL statement. At least the following columns have to be in the 
+#' result: \code{id, event_date}. If event should be weighted than column event_weight has to be in result. It 
+#' does not make sense to include any other columns as these are not used by the function. Column named
+#' id will be used as a key to results of \code{VintageUnitSQL}. Currently, only single column key is supported.
+#' @param TimeGroup Aggregation of vintage data. Defines how distance between vintage_unit_date and 
+#' event_date is measured. Possible values are \code{month, quarter, year}. Distance calculation is 
+#' performed by custom PostgreSQL function named \code{time_distance}. Code to create this function is stored 
+#' in \code{XXX/time_distance.sql}
+#' @param TimeExpansion Defines how time expansion is performed. By default, vintages will be generated 
+#' up to last existing point in events. E.g. when maximum distance in data is 10 than every vintage 
+#' will have 10 observations. There are two other options, using \code{now} or date in \code{yyyy-mm-dd} format. 
+#' \code{now} will be internally replaced by current date. If any of these option is used than value of parameter 
+#' will be used as last available point in data. Thus, number of points for every vintage will be expanded. Note 
+#' that this might return unexpected results if this date is earlier than last point in events.
+#' @param Connection Connection to PostgreSQL database. Vector of exactly 5 elements in the following 
+#' order: \code{user, password, database name, host, port}.
+#' @param Result Type of results to return. By default (\code{data}), vintage data are returned. 
+#' The other option is to use \code{sql} - this will return SQL statement to get vintage data.
+#' @param DistanceFunctionSchema Name of database schema where \code{time_distance} function is available.
+#' @param SQLModifier This will constraint result of VintageUnitSQL to selected columns and/or rows. 
+#' Vector with 1 or 2 elements. In the first element, required columns are specified, the second can 
+#' contain additional \code{WHERE} condition. If used than VintageUnitSQL is wrapped into 
+#' \code{SELECT id, vintage_unit_date [, First Element] FROM (VintageUnitSQL) x [WHERE Second Element]}.
+#' When only WHERE clause should be used than first element has to be asterisk ('*').
+#' If first element is empty string or NA than only columns \code{id} and \code{vintage_unit_date} will be used 
+#' from results of \code{VintageUnitSQL}.
+#' @export 
+
+GetVintageData <- function(VintageUnitSQL,PerformanceEventSQL,TimeGroup='month',TimeExpansion='none',Connection,Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL) {
+
+options(sqldf.RPostgreSQL.user      = Connection[1], 
+        sqldf.RPostgreSQL.password  = Connection[2],
+        sqldf.RPostgreSQL.dbname    = Connection[3],
+        sqldf.RPostgreSQL.host      = Connection[4], 
+        sqldf.RPostgreSQL.port      = Connection[5])
+
+
+# Add columns selection to VintageUnit if defined
+VintageUnitSQLOut <- VintageUnitSQL
+
+if (!is.null(SQLModifier)) {
+  if (is.na(SQLModifier[1]) | SQLModifier[1]=='') {
+    VintageUnitSQLOut <- paste("select id, vintage_unit_date from (", VintageUnitSQL, ") VintageUnitSQLSource")    
+  } else if (SQLModifier[1] == '*') {
+    VintageUnitSQLOut <- paste("select * from (", VintageUnitSQL, ") VintageUnitSQLSource")    
+  } else {
+    RequiredFields <- paste(",",SQLModifier[1])
+    VintageUnitSQLOut <- paste("select id, vintage_unit_date", RequiredFields ,"from (", VintageUnitSQL, ") VintageUnitSQLSource")        
+  }
+
+  if (length(SQLModifier)==2) {
+    VintageUnitSQLOut <- paste(VintageUnitSQLOut,"where",SQLModifier[2])
+  }
+}
+
+# Test whether VintageUnitSQL contains at least id, vintage_unit_stat, vintage_unit_date
+
+VintageUnitSQLNames <- names(sqldf(paste(VintageUnitSQLOut," limit 1")))
+
+if (!any(VintageUnitSQLNames %in% 'id')) {
+  stop ('VintageUnitSQL does not contain column "id".')
+} else if (!any(VintageUnitSQLNames %in% 'vintage_unit_date')) {
+  stop ('VintageUnitSQL does not contain column "vintage_unit_date".')  
+}
+
+# Test whether PerformanceEventSQL contains at least id, event_date
+PerformanceEventSQLNames <- names(sqldf(paste(PerformanceEventSQL," limit 1")))
+
+if (!any(PerformanceEventSQLNames %in% 'id')) {
+  stop ('VintageUnitSQL does not contain column "id".')
+} else if (!any(PerformanceEventSQLNames %in% 'event_date')) {
+  stop ('VintageUnitSQL does not contain column "event_date".')  
+} 
+
+vGroups <- VintageUnitSQLNames[!(VintageUnitSQLNames  %in% c('id','vintage_unit_date','vintage_unit_weight'))]
+
+if (length(vGroups)==0) {
+  cat("No slicers defined.","\n")
+} else {
+  cat("The following slicers will be applied:",vGroups,"\n")
+}
+
+VintageUnitSQLOut = paste("with vintage_unit as (",VintageUnitSQLOut,")",sep="")
+PerformanceEventSQL = paste(", performance_event as (",PerformanceEventSQL,")")
+
+if (!(TimeGroup  %in% c('month','quarter','year'))) {
+  stop('TimeGroup has to be one of month, quarter or year.')
+}
+
+if ( TimeGroup == "month" ) {
+  cat("Granularity of performance events will be 1 month. \n")
+  vTimeGroupInterval = '1 month'
+} else if ( TimeGroup == "quarter" ) {
+  cat("Granularity of performance events will be 1 quarter. \n")
+  vTimeGroupInterval = '3 months'
+} else if ( TimeGroup == 'year' ) {
+  cat("Granularity of performance events will be 1 year. \n")
+  vTimeGroupInterval = '1 year'
+}
+
+# Sanity check TimExpansion
+
+if (!(TimeExpansion %in% c('none','now') | grepl('[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}?',TimeExpansion))) {
+  stop("TimeExpansion has to be one of none, now or date in yyyy-mm-dd format.")
+}
+
+if ( TimeExpansion=='none' ) {
+  cat("Used time expansion parameter: none \n")
+  TimeExpansionOut="max_vintage_date"
+} else if (TimeExpansion=='now') {
+  cat("Used time expansion parameter: now \n")
+  TimeExpansionOut="Now()"  
+} else {
+  cat("Used time expansion parameter:", TimeExpansion,"\n")  
+  TimeExpansionOut=paste0("'",TimeExpansion,"'::date")
+}
+
+
+
+  vNonLast <- character(0)
+  vLast <- character(0)
+  
+if (!(length(vGroups) ==0)) {
+  vNonLast = paste(paste(vGroups[1:(length(vGroups)-1)],collapse=","),",")
+  vLast = vGroups[-1]
+  vGroups <- paste(paste(vGroups,collapse=","),",")  
+}
+
+if (length(vLast)==0) {
+  vLast="1"
+}
+
+DistanceFunctionSchemaOut <- if (!is.null(DistanceFunctionSchema)) paste(DistanceFunctionSchema,'.',sep="")
+
+################################################################################################
+# Paste SQL components together
+################################################################################################
+
+vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
+  "
+  ,vintage_descriptors as (
+    select
+      ",vGroups,"
+      vintage_unit_date, 
+      generate_series(date_trunc('",TimeGroup,"',vintage_unit_date),",TimeExpansionOut,",'",vTimeGroupInterval,"')::date as event_date,
+      ", DistanceFunctionSchemaOut ,"time_distance(generate_series(date_trunc('",TimeGroup,"',vintage_unit_date),",TimeExpansionOut,",'",vTimeGroupInterval,"')::date, vintage_unit_date,'",TimeGroup,"') as distance
+    from(
+      select 
+        ",vGroups,"
+        vintage_unit_date, max_vintage_date
+      from 
+        vintage_unit, 
+        (select max(event_date) as max_vintage_date from performance_event) x
+      group by 
+        ",vGroups,"
+        vintage_unit_date,
+        max_vintage_date
+    ) a
+  )
+  
+  ,vintage_unit_sums as(
+      select
+        ",vGroups,"
+        vintage_unit_date, 
+        sum(",if('vintage_unit_weight' %in% VintageUnitSQLNames) "vintage_unit_weight" else "1::int",") as vintage_unit_weight,
+        count(*) as vintage_unit_count
+      from
+        vintage_unit
+      group by 
+        ",vGroups,"
+        vintage_unit_date
+  )
+  
+  ,performance_event_sums as(
+      select
+        ",vGroups,"
+        vintage_unit_date, 
+        date_trunc('",TimeGroup,"',event_date)::date as event_date, 
+        sum(",if('event_weight' %in% PerformanceEventSQLNames) "event_weight" else "1::int",") as event_weight
+      from
+        vintage_unit
+        join performance_event ve using (id)
+      group by 
+        ",vGroups," 
+        vintage_unit_date, 
+        date_trunc('",TimeGroup,"',event_date)::date
+  )
+  
+  ,vintage_csums as (
+      select 
+        vd.*,
+        vs.event_weight,
+        sum(coalesce(event_weight,0)) 
+          over(partition by ",vGroups,"vintage_unit_date order by event_date) as event_weight_csum
+      from 
+        vintage_descriptors vd
+        left join performance_event_sums vs using (",vGroups,"vintage_unit_date,event_date)
+  )
+
+  ,aggregation as (
+     select
+       ",vGroups,"
+        vd.distance,
+        sum(vintage_unit_weight) vintage_unit_weight,
+        sum(vintage_unit_count) vintage_unit_count,
+        sum(coalesce(event_weight,0)) as event_weight,
+        sum(coalesce(event_weight,0)) / sum(vintage_unit_weight) as event_weight_pct,
+        sum(coalesce(event_weight_csum,0)) as event_weight_csum,
+        sum(coalesce(event_weight_csum,0))/sum(coalesce(vintage_unit_weight,0)) as event_weight_csum_pct
+     from
+        vintage_descriptors  vd
+        join vintage_unit_sums using  (",vGroups," vintage_unit_date)
+        left join vintage_csums using (",vGroups," vintage_unit_date, event_date)
+     group by
+        ",vGroups,"
+        vd.distance
+     order by
+        ",vGroups,"
+        distance
+  ) 
+
+  select * , row_number() over(partition by ",vNonLast," distance order by ",vLast,") as rn from aggregation        
+             "
+  ,sep="")
+
+if (Result=="data") {
+    sqldf(vSQL) 
+  } else if (Result=="sql") {
+      print(vSQL)
+  }  else {
+   stop("Result has to be one of data or sql.")
+}
+
+}

@@ -1,8 +1,18 @@
 Package: pgvint
-Title: 
-Description: 
+Title: Vintage Analysis for PostgreSQL Data
+Description: Vintage analysis for data stored in PostgreSQL database.
 Version: 0.1
-Authors@R: # getOptions('devtools.desc.author')
-Depends: R (>= 3.0.2)
-License: # getOptions('devtools.desc.license')
+Author: Tomas Greif
+Maintainer: Tomas Greif <greif.tomas@gmail.com>
+Depends:
+    R (>= 3.0.2)
+License: GPL-2
 LazyData: true
+Imports:
+    ggplot2,
+    sqldf,
+    RPostgreSQL
+Collate:
+    'GetVintageData.R'
+    'PlotVintageData.R'
+    'pgvint-package.r'
