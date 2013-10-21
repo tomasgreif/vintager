@@ -18,8 +18,8 @@
 
 ## Usage
 See help:
-    ?GetVintageData
-    ?PlotVintageData
+    help(GetVintageData)
+    help(PlotVintageData)
 
 ## Sample plots
 
