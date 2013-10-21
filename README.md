@@ -15,7 +15,7 @@ curves are calculated.
     install_github("pgvint",username="tomasgreif")
     library(pgvint)
 
-### Creating time_distance function and load sample data
+### Create time_distance function and load sample data
     Connection <- c('user','password','database','host','port')
     CreateTimeDistanceFunction(Connection=Connection,LoadData=TRUE)
 
