@@ -16,3 +16,4 @@ Collate:
     'GetVintageData.R'
     'PlotVintageData.R'
     'pgvint-package.r'
+    'CreateTimeDistanceFunction.R'

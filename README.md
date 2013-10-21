@@ -1,8 +1,16 @@
 # Vintage Analysis in PostgreSQL and R
-## Installation
-### Pre-requisites
+## Pre-requisites
 * R version 3.02 or higher
 * PostgreSQL version 9.1 or higher
+* ggplot2, sqldf, RPostgreSQL, devtools
+
+## Installation
+
+### Package installation
+
+    library(devtools)
+    install_github("pgvint",username="tomasgreif")
+    library(pgvint)
 
 ### Creating time_distance function
 
