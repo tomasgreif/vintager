@@ -3,5 +3,5 @@
 #' @name pgvint
 #' @docType package
 #' @import ggplot2 
-#' @import sqldf
+#' @importFrom sqldf sqldf
 NULL
