@@ -18,6 +18,7 @@
 
 ## Usage
 See help:
+
     help(GetVintageData)
     help(PlotVintageData)
 
