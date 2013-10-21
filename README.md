@@ -1,4 +1,7 @@
 # Vintage Analysis in PostgreSQL and R
+`pgvint` transforms source data into vintage analysis format. From detailed list of units (e.g. loans) and events (e.g. charge-off), vintage
+curves are calculated.
+
 ## Pre-requisites
 * R version 3.02 or higher
 * PostgreSQL version 9.1 or higher
