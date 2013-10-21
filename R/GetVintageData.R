@@ -113,6 +113,8 @@
 
 GetVintageData <- function(VintageUnitSQL,PerformanceEventSQL,TimeGroup='month',TimeExpansion='none',Connection,Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL) {
 
+require(RPostgreSQL)
+  
 options(sqldf.RPostgreSQL.user      = Connection[1], 
         sqldf.RPostgreSQL.password  = Connection[2],
         sqldf.RPostgreSQL.dbname    = Connection[3],
