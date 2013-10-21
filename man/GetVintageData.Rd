@@ -8,35 +8,54 @@
     DistanceFunctionSchema = NULL, SQLModifier = NULL)
 }
 \arguments{
-  \item{VintageUnitSQL}{Valid SQL statement. If
-  \code{SQLModifier} is not used than at least the
-  following columns have to be in the result: \code{id,
-  vintage_unit_date}. If vintage units should be weighted
-  than column \code{vintage_unit_weight} has to be as
-  column in result. Result can contain any number of
-  additional columns. These columns are referred as
-  \code{Slicers}. All columns in result will be used to
-  form vintages - every unique combination of
-  \code{Slicers} (all columns except \code{id,
-  vintage_unit_date, vintage_unit_weight}) will be
-  considered as one vintage.}
+  \item{VintageUnitSQL}{Valid SQL \code{SELECT} statement.
+  \cr If \code{SQLModifier} is not used than result has to
+  have the following structure (Note: optional elements are
+  denoted as \code{[...]}): \tabular{ll}{ Column \tab
+  Description\cr \code{id} \tab Unique identificator of
+  row. Is considered to be a key to
+  \code{PerformanceEventSQL}. Duplicates will result in
+  incorrect results as join between vintage units and
+  events will be multiplicated. Any data type possible.\cr
+  \code{vintage_unit_date} \tab Has to be of type date. It
+  is not necessary to round dates to
+  months/quarters/years.\cr \code{[vintage_unit_weight]}
+  \tab Optional weight. When no weight is defined than
+  every row is considered to be one unit (every row in
+  result represents one unit). Has to be of numeric type
+  (integer, numeric, float).\cr \code{[Slicers]} \tab Any
+  number of columns used to form vintages. There are no
+  constraints on data types. Any name except \code{id,
+  vintage_unit_date, vintage_unit_weight} can be used.
+  Every unique combination of \code{Slicers} will be
+  considered as one vintage. When there are no
+  \code{Slicers} then only one vintage will be created. \cr
+  }}
 
-  \item{PerformanceEventSQL}{Valid SQL statement. At least
-  the following columns have to be in the result: \code{id,
-  event_date}. If event should be weighted than column
-  event_weight has to be in result. It does not make sense
-  to include any other columns as these are not used by the
-  function. Column named id will be used as a key to
-  results of \code{VintageUnitSQL}. Currently, only single
-  column key is supported.}
+  \item{PerformanceEventSQL}{Valid SQL \code{SELECT}
+  statement. Result has to have the following structure
+  (Note: optional elements are denoted as \code{[...]}):
+  \tabular{ll}{ Column \tab Description\cr \code{id} \tab
+  Identificator of vintage unit to which event belongs. Has
+  to be of same data type as column \code{id} in
+  \code{VintageUnitSQL}. \cr \code{event_date} \tab Date
+  when event occured. Has to be of type date. It is not
+  necessary to round dates to months/quarters/years.\cr
+  \code{[event_weight]} \tab Optional weight. When no
+  weight is defined than every row is considered to be one
+  unit (every row in result represents one event). Has to
+  be of numeric type (integer, numeric, float).\cr } Note:
+  it does not make sense to include any other columns as
+  these are not used by the function. Currently, only
+  single column key is supported.}
 
   \item{TimeGroup}{Aggregation of vintage data. Defines how
-  distance between vintage_unit_date and event_date is
-  measured. Possible values are \code{month, quarter,
-  year}. Distance calculation is performed by custom
-  PostgreSQL function named \code{time_distance}. Code to
-  create this function is stored in
-  \code{XXX/time_distance.sql}}
+  distance between \code{vintage_unit_date} and
+  \code{event_date} is measured. Possible values are
+  \code{month, quarter, year}. Distance calculation is
+  performed by custom PostgreSQL function named
+  \code{time_distance}. Code to create this function is
+  stored in \code{exec/time_distance.sql}}
 
   \item{TimeExpansion}{Defines how time expansion is
   performed. By default, vintages will be generated up to
@@ -70,46 +89,100 @@
   \code{WHERE} condition. If used than VintageUnitSQL is
   wrapped into \code{SELECT id, vintage_unit_date [, First
   Element] FROM (VintageUnitSQL) x [WHERE Second Element]}.
-  When only WHERE clause should be used than first element
-  has to be asterisk ('*'). If first element is empty
-  string or NA than only columns \code{id} and
-  \code{vintage_unit_date} will be used from results of
-  \code{VintageUnitSQL}.}
+  When only WHERE clause should be used and columns should
+  remain unchanged than first element has to be asterisk
+  ('*'). If first element is empty string or NA than only
+  columns \code{id} and \code{vintage_unit_date} will be
+  used from results of \code{VintageUnitSQL}.}
 }
 \description{
-  This function prepares data for vintage analysis.
-  Currently it supports only data stored in PostgreSQL
-  database.
+  This function prepares data stored in PostgreSQL database
+  for vintage analysis. According to Statsoft vintage
+  analysis is: "Vintage Analysis. A vintage is a group of
+  credit accounts that all originated within a specific
+  time period, usually a year. Vintage analysis is used in
+  credit scoring and refers to the process of monitoring
+  groups of accounts and comparing performance across past
+  groups. The comparisons take place at similar loan ages,
+  allowing for the detection of deviation from past
+  performance. Typically, a graphical representation is
+  used for this purpose, such as one showing the
+  relationship between months on the books and the
+  percentage of delinquent accounts across multiple
+  vintages." In this function concept of vintage is
+  generalized in such way that any objects sharing same
+  properties can form a vintage.
 }
 \details{
   If successful, dataset with the following columns is
   returned: \tabular{ll}{ Column \tab Description\cr
-  \code{[Slicers]} \tab Additional colums used for
-  conditioning of vintages as used in
+  \code{[Slicers]} \tab As defined in
   \code{VintageUnitSQL}.\cr \code{distance} \tab Distance
   between vintage unit date and event date measured in time
   interval (currently month, quarter or year).\cr
   \code{vintage_unit_weight} \tab sum of vintage unit
-  weights for given vintage at distance. Note that one
-  vintage can have different values for different distances
-  when no slicer is based on vintage unit date and with
-  granularity equal to time grouping of events (see
-  examples to understand this better). In case when no
-  weight is defined that values are equal as in column
-  vintage_unit_count\cr \code{vintage_unit_count} \tab
-  number (of rows) for given vintage at distance. Using
-  same logic as vintage unit weight.\cr \code{event_weight}
-  \tab Sum of event weights for given vintage at distance.
-  If no weight is defined, than 1 is used (equal to row
-  count)\cr \code{event_weight_pct} \tab event_weight_pct /
-  vintage_unit_weight\cr \code{event_weight_csum} \tab
+  weights for given vintage at given distance. Note that
+  one vintage can have different values for different
+  distances when no slicer is based on vintage unit date
+  and with granularity equal to time grouping of events
+  (see examples to understand this better). In case when no
+  weight is defined that values are equal to values in
+  column \code{vintage_unit_count}.\cr
+  \code{vintage_unit_count} \tab number (of rows) for given
+  vintage at distance. Using same logic as vintage unit
+  weight.\cr \code{event_weight} \tab Sum of event weights
+  for given vintage at distance. If no weight is defined,
+  than 1 is used (equal to row count)\cr
+  \code{event_weight_pct} \tab \code{event_weight /
+  vintage_unit_weight}\cr \code{event_weight_csum} \tab
   running total of event weights for given vintage ordered
   by distance. If no slicer is based on vintage date and
   with granularity equal to time grouping of events, than
   running total cannot be reproduced as running total of
   event_weight! See examples to understand this better.\cr
-  \code{event_weight_csum_pct} \tab a\cr \code{rn} \tab
-  a\cr } This function is tested with PostgreSQL 9.1, but
-  any version with window functions support should work.
+  \code{event_weight_csum_pct} \tab \code{event_weight_csum
+  / vintage_unit_weight}\cr \code{rn} \tab Column to
+  numerically indicate order of last \code{Sclicer}. Useful
+  when last \code{Slicer} is time-orderable, but data type
+  is not number/date. \cr } This function is tested with
+  PostgreSQL 9.1, but any version with window functions
+  support should work.
+}
+\examples{
+\dontrun{
+Setup  ########################
+
+VintageUnitSQL <- "select id, origination_date as vintage_unit_date, product from small_portfolio"
+PerformanceEventSQL <- "select id, repaid_date as event_date from small_portfolio"
+Connection <- c('user','password','database','host','port')
+
+# Get data ######################
+
+# Hello vintage example
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection)
+
+# Aggregate data by quarters
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,TimeGroup='quarter',Connection=Connection)
+
+# Expand maximum allowable date to specific date
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,TimeExpansion='2013-01-01',Connection=Connection)
+
+# Keep columns in VintageUnitSQL, filter only product A
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection,
+                          SQLModifier = c('*',"product='A'"))
+
+# Do not use any slicers (only vintage_unit_date and id will be used)
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection,SQLModifier = NA)
+
+# Add derived column
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection,
+                         SQLModifier = c("vintage_unit_date as granularity, product"))
+
+# Return SQL instead of data
+GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection, Result='sql')
+}
+}
+\references{
+  http://www.statsoft.com/textbook/statistics-glossary/v/
 }
 

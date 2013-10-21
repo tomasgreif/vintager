@@ -1,12 +1,13 @@
 #' Plot vintage data
 #'
-#' This function prints hello 
+#' This function plots results of \code{GetVintageData} function. All \code{Slicers} in results have
+#' to be included in plot definition.
 #'
-#' @param data
-#' @param x
-#' @param y
-#' @param cond
-#' @param facets
+#' @param data Result of \code{GetVintageData} function.
+#' @param x Data to be displayed on \code{x} axis. Default is distance
+#' @param y Data to be displayed on \code{y} axis. Default is \code{event_weight_csum_pct}.
+#' @param cond Variable to be used for conditioning (in-chart group).
+#' @param facets Formulat to be used for facetting.
 #' @export 
 
 
