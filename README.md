@@ -24,6 +24,7 @@ See help:
 
     help(GetVintageData)
     help(PlotVintageData)
+    help(CreateTimeDistanceFunction)
 
 ## Sample plots
 
