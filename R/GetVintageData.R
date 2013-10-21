@@ -80,7 +80,7 @@
 #' Setup  ########################
 #'
 #' VintageUnitSQL <- "select id, origination_date as vintage_unit_date, product from small_portfolio"
-#' PerformanceEventSQL <- "select id, repaid_date as event_date from small_portfolio"
+#' PerformanceEventSQL <- "select id, repayment_date as event_date from small_portfolio"
 #' Connection <- c('user','password','database','host','port')
 #' 
 #' # Get data ######################
