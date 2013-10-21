@@ -1,5 +1,5 @@
 # Vintage Analysis in PostgreSQL and R
-`pgvint` transforms source data into vintage analysis format. From detailed list of units (e.g. loans) and events (e.g. charge-off), vintage
+`pgvint` transforms source data into vintage analysis format. From detailed list of units (e.g. loans) and events (e.g. repayment), vintage
 curves are calculated.
 
 ## Pre-requisites
