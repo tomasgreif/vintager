@@ -12,11 +12,14 @@
     install_github("pgvint",username="tomasgreif")
     library(pgvint)
 
-### Creating time_distance function
-
-### Prepare sample data
+### Creating time_distance function and load sample data
+    Connection <- c('user','password','database','host','port')
+    CreateTimeDistanceFunction(Connection=Connection,LoadData=TRUE)
 
 ## Usage
+See help:
+    ?GetVintageData
+    ?PlotVintageData
 
 ## Sample plots
 
