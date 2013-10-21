@@ -76,6 +76,7 @@
 #' When only WHERE clause should be used and columns should remain unchanged  than first element has to be asterisk ('*').
 #' If first element is empty string or NA than only columns \code{id} and \code{vintage_unit_date} will be used 
 #' from results of \code{VintageUnitSQL}.
+#' @param Verbose Prints additional diagnostics messages when \code{TRUE}. Default is \code{FALSE}.
 #' @examples \dontrun{
 #' Setup  ########################
 #'
@@ -111,7 +112,8 @@
 #' @references http://www.statsoft.com/textbook/statistics-glossary/v/
 #' @export 
 
-GetVintageData <- function(VintageUnitSQL,PerformanceEventSQL,TimeGroup='month',TimeExpansion='none',Connection,Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL) {
+GetVintageData <- function(VintageUnitSQL,PerformanceEventSQL,TimeGroup='month',TimeExpansion='none',Connection,
+                           Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL,Verbose=FALSE) {
 
 require(RPostgreSQL)
   
@@ -121,6 +123,24 @@ options(sqldf.RPostgreSQL.user      = Connection[1],
         sqldf.RPostgreSQL.host      = Connection[4], 
         sqldf.RPostgreSQL.port      = Connection[5])
 
+CheckDatabase <- function(Connection) {
+    
+out <- tryCatch(
+        {
+          sqldf("select TRUE;")
+        },
+        error=function(cond) {
+          out <- FALSE
+        }
+        )    
+  return(out)
+}
+
+if (!CheckDatabase(Connection)) {
+  stop("Not valid PostgreSQL connection.") 
+} else {
+  if(Verbose) cat("PostgreSQL connection is valid. \n")
+}
 
 # Add columns selection to VintageUnit if defined
 VintageUnitSQLOut <- VintageUnitSQL
@@ -162,9 +182,9 @@ if (!any(PerformanceEventSQLNames %in% 'id')) {
 vGroups <- VintageUnitSQLNames[!(VintageUnitSQLNames  %in% c('id','vintage_unit_date','vintage_unit_weight'))]
 
 if (length(vGroups)==0) {
-  cat("No slicers defined.","\n")
+  if(Verbose) cat("No slicers defined.","\n")
 } else {
-  cat("The following slicers will be applied:",vGroups,"\n")
+  if(Verbose) cat("The following slicers will be applied:",vGroups,"\n")
 }
 
 VintageUnitSQLOut = paste("with vintage_unit as (",VintageUnitSQLOut,")",sep="")
@@ -175,13 +195,13 @@ if (!(TimeGroup  %in% c('month','quarter','year'))) {
 }
 
 if ( TimeGroup == "month" ) {
-  cat("Granularity of performance events will be 1 month. \n")
+  if (Verbose) cat("Granularity of performance events will be 1 month. \n")
   vTimeGroupInterval = '1 month'
 } else if ( TimeGroup == "quarter" ) {
-  cat("Granularity of performance events will be 1 quarter. \n")
+  if (Verbose) cat("Granularity of performance events will be 1 quarter. \n")
   vTimeGroupInterval = '3 months'
 } else if ( TimeGroup == 'year' ) {
-  cat("Granularity of performance events will be 1 year. \n")
+  if (Verbose) cat("Granularity of performance events will be 1 year. \n")
   vTimeGroupInterval = '1 year'
 }
 
@@ -192,13 +212,13 @@ if (!(TimeExpansion %in% c('none','now') | grepl('[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}
 }
 
 if ( TimeExpansion=='none' ) {
-  cat("Used time expansion parameter: none \n")
+  if (Verbose) cat("Used time expansion parameter: none \n")
   TimeExpansionOut="max_vintage_date"
 } else if (TimeExpansion=='now') {
   cat("Used time expansion parameter: now \n")
   TimeExpansionOut="Now()"  
 } else {
-  cat("Used time expansion parameter:", TimeExpansion,"\n")  
+  if (Verbose) cat("Used time expansion parameter:", TimeExpansion,"\n")  
   TimeExpansionOut=paste0("'",TimeExpansion,"'::date")
 }
 
