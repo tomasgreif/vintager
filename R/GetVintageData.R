@@ -215,7 +215,7 @@ if ( TimeExpansion=='none' ) {
   if (Verbose) cat("Used time expansion parameter: none \n")
   TimeExpansionOut="max_vintage_date"
 } else if (TimeExpansion=='now') {
-  cat("Used time expansion parameter: now \n")
+  if (Verbose) cat("Used time expansion parameter: now \n")
   TimeExpansionOut="Now()"  
 } else {
   if (Verbose) cat("Used time expansion parameter:", TimeExpansion,"\n")  
