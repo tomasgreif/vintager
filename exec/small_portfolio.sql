@@ -1,3 +1,5 @@
+drop table if exists small_portfolio;
+
 CREATE TABLE small_portfolio
 (
   id integer,
