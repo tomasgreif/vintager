@@ -40,7 +40,7 @@ PrintVintageData <- function(VintageData,
       lapply(Out, function(x, Digits) {
         cf <- format(x,digits=Digits) 
         cf[is.na(x)] <- ""
-        cf })
+        cf }, Digits)
     } else {
       cf <- format(Out,digits=Digits) 
       cf[is.na(Out)] <- ""
