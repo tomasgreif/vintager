@@ -1,5 +1,8 @@
 export(CreateTimeDistanceFunction)
 export(GetVintageData)
 export(PlotVintageData)
+export(PrintVintageData)
+import(WriteXLS)
 import(ggplot2)
+importFrom(reshape2,dcast)
 importFrom(sqldf,sqldf)

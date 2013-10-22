@@ -11,9 +11,12 @@ LazyData: true
 Imports:
     ggplot2,
     sqldf,
-    RPostgreSQL
+    RPostgreSQL,
+    reshape2,
+    WriteXLS
 Collate:
     'GetVintageData.R'
     'PlotVintageData.R'
     'pgvint-package.r'
     'CreateTimeDistanceFunction.R'
+    'PrintVintageData.R'

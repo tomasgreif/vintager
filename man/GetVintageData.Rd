@@ -5,7 +5,8 @@
   GetVintageData(VintageUnitSQL, PerformanceEventSQL,
     TimeGroup = "month", TimeExpansion = "none",
     Connection, Result = "data",
-    DistanceFunctionSchema = NULL, SQLModifier = NULL)
+    DistanceFunctionSchema = NULL, SQLModifier = NULL,
+    Verbose = FALSE)
 }
 \arguments{
   \item{VintageUnitSQL}{Valid SQL \code{SELECT} statement.
@@ -94,6 +95,9 @@
   ('*'). If first element is empty string or NA than only
   columns \code{id} and \code{vintage_unit_date} will be
   used from results of \code{VintageUnitSQL}.}
+
+  \item{Verbose}{Prints additional diagnostics messages
+  when \code{TRUE}. Default is \code{FALSE}.}
 }
 \description{
   This function prepares data stored in PostgreSQL database
