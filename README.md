@@ -5,7 +5,7 @@ curves are calculated.
 ## Pre-requisites
 * R version 3.02 or higher
 * PostgreSQL version 9.1 or higher
-* ggplot2, sqldf, RPostgreSQL, devtools
+* ggplot2, sqldf, RPostgreSQL, devtools, XLSWrite, reshape2
 
 ## Installation
 
@@ -24,9 +24,13 @@ See help:
 
     help(GetVintageData)
     help(PlotVintageData)
+    help(PrintVintageData)
     help(CreateTimeDistanceFunction)
 
-## Sample plots
+## Sample outputs
+
+Vintage data:
+![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvint-vintage-data-print.png)
 
 Standard vintage curves:
 ![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvint-vintage-data-plot.png)
