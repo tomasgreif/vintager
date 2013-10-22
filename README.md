@@ -20,7 +20,18 @@ curves are calculated.
     CreateTimeDistanceFunction(Connection=Connection,LoadData=TRUE)
 
 ## Usage
-See help:
+`pgvint` can work with the following data design:
+
+![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvint-source-data-structure.png)
+
+In the basic form, you can just use:
+
+    Connection <- c('user','password','database','host','port') # Use real values!
+    VintageUnitSQL <- "select * from vintage_units"
+    PerformanceEventSQL <- "select * from performance_events"
+    GetVintageData(VintageUnitSQL,PerformanceEventSQL,Connection=Connection)
+
+For additional details see help:
 
     help(GetVintageData)
     help(PlotVintageData)
