@@ -19,7 +19,7 @@
 
 PrintVintageData <- function(VintageData,
                              Columns=c("vintage_unit_weight","vintage_unit_count","event_weight","event_weight_pct","event_weight_csum","event_weight_csum_pct"),
-                             Result='print',File="VintageData.xls") {
+                             Result='print',File="VintageData.xls",Digits=getOption("digits")) {
   
   RawColumns <- c('vintage_unit_weight','vintage_unit_count','event_weight','event_weight_pct','event_weight_csum','event_weight_csum_pct')
   RawNames <-   c('VintageUnitWeight','VintageUnitCount','EventWeight','EventWeightPct','EventWeightCsum','EventWeightCsumPct')
@@ -36,7 +36,10 @@ PrintVintageData <- function(VintageData,
     WriteXLS("Out",ExcelFileName=File)
     cat("Data written to:",File)
   } else if (Result == 'print') {
+    Digits.Backup <- Digits
+    options(digits=Digits)
     Out
+    options(digits=Digits.Backup)
   }
   
 }
