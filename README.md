@@ -40,3 +40,8 @@ Standard vintage curves:
 Tranposed vintage curves:
 
 ![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvint-vintage-data-plot-transposed.png)
+
+Tranposed vintage curves by two groups, partitioned by distance:
+
+![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvint-vintage-data-plot-transposed-exploded.png)
+
