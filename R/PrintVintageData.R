@@ -38,7 +38,7 @@ PrintVintageData <- function(VintageData,
   } else if (Result == 'print') {
     Digits.Backup <- Digits
     options(digits=Digits)
-    Out
+    print(Out)
     options(digits=Digits.Backup)
   }
   
