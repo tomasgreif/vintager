@@ -36,9 +36,17 @@ PrintVintageData <- function(VintageData,
     WriteXLS("Out",ExcelFileName=File)
     cat("Data written to:",File)
   } else if (Result == 'print') {
-    cf <- format(Out,digits=2) ## use format to set other options like digits, justify , ...
-    cf[is.na(Out)] <- ""
-    cf    
+    if (is.list(Out) & !is.data.frame(Out)) {
+      lapply(Out, function(x, Digits) {
+        cf <- format(x,digits=Digits) 
+        cf[is.na(x)] <- ""
+        cf })
+    } else {
+      cf <- format(Out,digits=Digits) 
+      cf[is.na(Out)] <- ""
+      cf      
+    }
+
   }
     
 }
