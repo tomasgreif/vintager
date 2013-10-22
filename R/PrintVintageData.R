@@ -32,6 +32,7 @@ PrintVintageData <- function(VintageData,
   names(Out) <- RawNames[(RawColumns %in% Columns)]
   
   if (Result=='xls') {
+    require(WriteXLS)
     WriteXLS("Out",ExcelFileName=File)
     cat("Data written to:",File)
   } else if (Result == 'print') {
