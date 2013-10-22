@@ -4,7 +4,8 @@
 \usage{
   PrintVintageData(VintageData,
     Columns = c("vintage_unit_weight", "vintage_unit_count", "event_weight", "event_weight_pct", "event_weight_csum", "event_weight_csum_pct"),
-    Result = "print", File = "VintageData.xls")
+    Result = "print", File = "VintageData.xls",
+    Digits = getOption("digits"))
 }
 \arguments{
   \item{data}{Result of \code{GetVintageData} function.}
