@@ -5,10 +5,11 @@
   PrintVintageData(VintageData,
     Columns = c("vintage_unit_weight", "vintage_unit_count", "event_weight", "event_weight_pct", "event_weight_csum", "event_weight_csum_pct"),
     Result = "print", File = "VintageData.xls",
-    Digits = getOption("digits"))
+    Digits = getOption("digits"), Stacked = FALSE)
 }
 \arguments{
-  \item{data}{Result of \code{GetVintageData} function.}
+  \item{VintageData}{Result of \code{GetVintageData}
+  function.}
 
   \item{Columns}{Columns to be printed. Any combination of
   the following possible statistics:
@@ -25,6 +26,12 @@
   Makes sense only when \code{Result} is set to \code{xls}.
   If no name is given and \code{Result} is \code{xls} then
   name \code{VintageData.xls} will be used as default.}
+
+  \item{Digits}{Number of significant digits to be used
+  when printing (only valid for \code{Result='print'})}
+
+  \item{Stacked}{If \code{TRUE} then all tables will be
+  saved on single sheet in XLS. Default is \code{FALSE}.}
 }
 \description{
   This function prints results of \code{GetVintageData}

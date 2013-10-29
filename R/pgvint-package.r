@@ -6,4 +6,6 @@
 #' @import WriteXLS WriteXLS
 #' @importFrom reshape2 dcast
 #' @importFrom sqldf sqldf
+#' @import plyr
+#' @import RPostgreSQL
 NULL

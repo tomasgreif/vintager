@@ -72,8 +72,8 @@ if(LoadData) {
           repayment_date date,
           CONSTRAINT id_big_pkey PRIMARY KEY (id)
         );",sep=""))
-  data(BigPortfolio,package="pgvint")
-  data(SmallPortfolio,package="pgvint")
+  data(BigPortfolio,package="pgvint",envir = environment())
+  data(SmallPortfolio,package="pgvint",envir = environment())
   sqldf(paste("insert into ",DataSchema,".",BigPortfolio,collapse="",sep=""))
   sqldf(paste("insert into ",DataSchema,".",SmallPortfolio,collapse="",sep=""))
 }

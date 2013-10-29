@@ -13,10 +13,14 @@ Imports:
     sqldf,
     RPostgreSQL,
     reshape2,
-    WriteXLS
+    WriteXLS,
+    plyr
 Collate:
     'GetVintageData.R'
     'PlotVintageData.R'
     'pgvint-package.r'
     'CreateTimeDistanceFunction.R'
     'PrintVintageData.R'
+    'BigPortfolio.R'
+    'SmallPortfolio.R'
+    'AggregateVintageData.R'

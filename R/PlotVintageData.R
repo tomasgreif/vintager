@@ -13,7 +13,7 @@
 
 PlotVintageData <- function(data=NULL,x="distance",y="event_weight_csum_pct",cond=NULL,facets=NULL) {
   
-  require(ggplot2)
+  #require(ggplot2)
   
   `%ni%` <- Negate(`%in%`)
 
