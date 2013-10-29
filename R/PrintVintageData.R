@@ -36,7 +36,7 @@ PrintVintageData <- function(VintageData,
   Out <- lapply(Columns, function(x) dcast(VintageData,as.formula(paste(paste(DisplayVars,collapse="+"),"~ distance")), value.var=x))  
   names(Out) <- RawNames[(RawColumns %in% Columns)]
 
-  # require(WriteXLS)  
+  require(WriteXLS)  
   
   if (Result=='xls') {
     if (Stacked) {
