@@ -3,7 +3,7 @@
 #' @name pgvint
 #' @docType package
 #' @import ggplot2 
-#' @import WriteXLS WriteXLS
+#' @import WriteXLS
 #' @importFrom reshape2 dcast
 #' @importFrom sqldf sqldf
 #' @import plyr
