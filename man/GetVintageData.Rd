@@ -6,7 +6,7 @@
     TimeGroup = "month", TimeExpansion = "none",
     Connection, Result = "data",
     DistanceFunctionSchema = NULL, SQLModifier = NULL,
-    Verbose = FALSE)
+    Verbose = FALSE, Debug = FALSE)
 }
 \arguments{
   \item{VintageUnitSQL}{Valid SQL \code{SELECT} statement.
@@ -98,6 +98,10 @@
 
   \item{Verbose}{Prints additional diagnostics messages
   when \code{TRUE}. Default is \code{FALSE}.}
+
+  \item{Debug}{Prints low level diagnostic messages.
+  Usefull mainly for package developer. Default is
+  \code{FALSE}}
 }
 \description{
   This function prepares data stored in PostgreSQL database

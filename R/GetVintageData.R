@@ -77,6 +77,7 @@
 #' If first element is empty string or NA than only columns \code{id} and \code{vintage_unit_date} will be used 
 #' from results of \code{VintageUnitSQL}.
 #' @param Verbose Prints additional diagnostics messages when \code{TRUE}. Default is \code{FALSE}.
+#' @param Debug Prints low level diagnostic messages. Usefull mainly for package developer. Default is \code{FALSE}
 #' @examples \dontrun{
 #' Setup  ########################
 #'
@@ -113,7 +114,7 @@
 #' @export 
 
 GetVintageData <- function(VintageUnitSQL,PerformanceEventSQL,TimeGroup='month',TimeExpansion='none',Connection,
-                           Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL,Verbose=FALSE) {
+                           Result='data',DistanceFunctionSchema=NULL,SQLModifier=NULL,Verbose=FALSE, Debug=FALSE) {
 
 require(RPostgreSQL)
   
@@ -185,6 +186,7 @@ if (length(vGroups)==0) {
   if(Verbose) cat("No slicers defined.","\n")
 } else {
   if(Verbose) cat("The following slicers will be applied:",vGroups,"\n")
+  if(Debug)   cat("Length of vGroups is:", length(vGroups),'\n')
 }
 
 VintageUnitSQLOut = paste("with vintage_unit as (",VintageUnitSQLOut,")",sep="")
@@ -229,7 +231,7 @@ if ( TimeExpansion=='none' ) {
   
 if (!(length(vGroups) ==0)) {
   vNonLast = paste(paste(vGroups[1:(length(vGroups)-1)],collapse=","),",")
-  vLast = vGroups[-1]
+  vLast = tail(vGroups, n=1)
   vGroups <- paste(paste(vGroups,collapse=","),",")  
 }
 
@@ -242,6 +244,18 @@ DistanceFunctionSchemaOut <- if (!is.null(DistanceFunctionSchema)) paste(Distanc
 ################################################################################################
 # Paste SQL components together
 ################################################################################################
+
+if(Debug) {
+  cat('Length and values of objects in SQL \n (length has to be 1, otherwise it results in SQL output multiplication:\n')
+  cat('   VintageUnitSQLOut  : ',length(VintageUnitSQLOut),'\n')
+  cat('   PerformanceEventSQL: ',length(PerformanceEventSQL),'\n')
+  cat('   vGroups            : ',length(vGroups),' ',vGroups,'\n')
+  cat('   TimeGroup          : ',length(TimeGroup),' ',TimeGroup,'\n')
+  cat('   TimeExpansionOut   : ',length(TimeExpansionOut),' ',TimeExpansionOut,'\n')
+  cat('   vTimeGroupInterval : ',length(vTimeGroupInterval),' ',vTimeGroupInterval,'\n')
+  cat('   vNonLast           : ',length(vNonLast),' ',vNonLast,'\n')
+  cat('   vLast              : ',length(vLast),' ',vLast,'\n')
+}
 
 vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
   "
