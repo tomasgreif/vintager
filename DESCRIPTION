@@ -24,3 +24,4 @@ Collate:
     'BigPortfolio.R'
     'SmallPortfolio.R'
     'AggregateVintageData.R'
+    'VintageData.R'
