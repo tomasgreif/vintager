@@ -97,10 +97,11 @@ AggregateVintageData <- function(VintageData=NA,Slicers=NA,Type='include',TimeAg
         "
         sum(vintage_unit_weight) as vintage_unit_weight,
         sum(vintage_unit_count) as vintage_unit_count,
-        sum(event_weight) as vintage_event_weight,
+        sum(event_weight) as event_weight,
         sum(event_weight)/sum(vintage_unit_weight) as event_weight_pct ,
         sum(event_weight_csum) as event_weight_csum,
-        sum(event_weight_csum)/sum(vintage_unit_weight) as event_weight_csum_pct 
+        sum(event_weight_csum)/sum(vintage_unit_weight) as event_weight_csum_pct,
+        sum(1) as rn
     from"
         , deparse(substitute(VintageData)), 
     "where",
