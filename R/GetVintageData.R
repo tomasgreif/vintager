@@ -180,6 +180,8 @@ if (!any(PerformanceEventSQLNames %in% 'id')) {
   stop ('VintageUnitSQL does not contain column "event_date".')  
 } 
 
+vGroups <- character(0)
+vGroupsNonComma <- character(0)
 vGroups <- VintageUnitSQLNames[!(VintageUnitSQLNames  %in% c('id','vintage_unit_date','vintage_unit_weight'))]
 
 if (length(vGroups)==0) {
@@ -209,13 +211,16 @@ if ( TimeGroup == "month" ) {
 
 # Sanity check TimExpansion
 
-if (!(TimeExpansion %in% c('none','now') | grepl('[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}?',TimeExpansion))) {
+if (!(TimeExpansion %in% c('none','now','local') | grepl('[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}?',TimeExpansion))) {
   stop("TimeExpansion has to be one of none, now or date in yyyy-mm-dd format.")
 }
 
 if ( TimeExpansion=='none' ) {
   if (Verbose) cat("Used time expansion parameter: none \n")
   TimeExpansionOut="max_vintage_date"
+} else if (TimeExpansion=='local') {
+  if (Verbose) cat("Used time expansion parameter: local \n")
+  TimeExpansionOut="max_vintage_date"  
 } else if (TimeExpansion=='now') {
   if (Verbose) cat("Used time expansion parameter: now \n")
   TimeExpansionOut="Now()"  
@@ -232,7 +237,9 @@ if ( TimeExpansion=='none' ) {
 if (!(length(vGroups) ==0)) {
   vNonLast = paste(paste(vGroups[1:(length(vGroups)-1)],collapse=","),",")
   vLast = tail(vGroups, n=1)
+  vGroupsNonComma <- paste(vGroups,collapse=",")    
   vGroups <- paste(paste(vGroups,collapse=","),",")  
+  
 }
 
 if (length(vLast)==0) {
@@ -250,12 +257,21 @@ if(Debug) {
   cat('   VintageUnitSQLOut  : ',length(VintageUnitSQLOut),'\n')
   cat('   PerformanceEventSQL: ',length(PerformanceEventSQL),'\n')
   cat('   vGroups            : ',length(vGroups),' ',vGroups,'\n')
+  cat('   vGroups            : ',length(vGroups),' ',vGroupsNonComma,'\n')  
   cat('   TimeGroup          : ',length(TimeGroup),' ',TimeGroup,'\n')
   cat('   TimeExpansionOut   : ',length(TimeExpansionOut),' ',TimeExpansionOut,'\n')
   cat('   vTimeGroupInterval : ',length(vTimeGroupInterval),' ',vTimeGroupInterval,'\n')
   cat('   vNonLast           : ',length(vNonLast),' ',vNonLast,'\n')
   cat('   vLast              : ',length(vLast),' ',vLast,'\n')
 }
+
+if (TimeExpansion == 'local' & length(vGroupsNonComma > 0)) {
+  localsql <-paste("join (select ", vGroups, " 1::int as dummy, max(event_date) as max_vintage_date from performance_event join 
+                   vintage_unit using (id) group by", vGroups, " dummy) x using (",vGroupsNonComma,") ")
+} else {
+  localsql <- paste("cross join (select max(event_date) as max_vintage_date from performance_event) x ")
+}  
+
 
 vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
   "
@@ -270,9 +286,7 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
         ",vGroups,"
         vintage_unit_date, max_vintage_date
       from 
-        vintage_unit, 
-        (select max(event_date) as max_vintage_date from performance_event) x
-      group by 
+        vintage_unit ", localsql ,"group by 
         ",vGroups,"
         vintage_unit_date,
         max_vintage_date
