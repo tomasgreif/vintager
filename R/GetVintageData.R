@@ -60,8 +60,9 @@
 #' in \code{exec/time_distance.sql}
 #' @param TimeExpansion Defines how time expansion is performed. By default, vintages will be generated 
 #' up to last existing point in events. E.g. when maximum distance in data is 10 than every vintage 
-#' will have 10 observations. There are two other options, using \code{now} or date in \code{yyyy-mm-dd} format. 
-#' \code{now} will be internally replaced by current date. If any of these option is used than value of parameter 
+#' will have 10 observations. There are three other options, using \code{now} or date in \code{yyyy-mm-dd} format or \code{local}. 
+#' \code{now} will be internally replaced by current date. \code{local} will use maximum event date available for every 
+#' vintage. If any of these option is used than value of parameter 
 #' will be used as last available point in data. Thus, number of points for every vintage will be expanded. Note 
 #' that this might return unexpected results if this date is earlier than last point in events.
 #' @param Connection Connection to PostgreSQL database. Vector of exactly 5 elements in the following 
@@ -266,8 +267,14 @@ if(Debug) {
 }
 
 if (TimeExpansion == 'local' & length(vGroupsNonComma > 0)) {
-  localsql <-paste("join (select ", vGroups, " 1::int as dummy, max(event_date) as max_vintage_date from performance_event join 
-                   vintage_unit using (id) group by", vGroups, " dummy) x using (",vGroupsNonComma,") ")
+  localsql <-paste("join (select
+                            vug.gid, 
+                            max(peg.event_date) as max_vintage_date 
+                          from
+                            performance_event_gid peg 
+                            join vintage_unit_gid vug using (id) 
+                          group by 
+                            vug.gid) x using (gid) ")
 } else {
   localsql <- paste("cross join (select max(event_date) as max_vintage_date from performance_event) x ")
 }  
@@ -275,19 +282,50 @@ if (TimeExpansion == 'local' & length(vGroupsNonComma > 0)) {
 
 vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
   "
+  , vintage_unit_gid as (
+     select
+        vu.id, ",
+        if(length(vGroupsNonComma)==0) "1::int" else paste("dense_rank() over(order by ",vGroupsNonComma,")") ," as gid,",
+        if('vintage_unit_weight' %in% VintageUnitSQLNames) "vu.vintage_unit_weight " else "1::int ", " as vintage_unit_weight,
+        vintage_unit_date
+     from
+        vintage_unit vu
+  )
+  
+  , vintage_unit_gid_descriptors as (
+     select
+        distinct gid ", if (length(vGroupsNonComma)!=0) paste(",",vGroupsNonComma) ,"
+     from
+        vintage_unit
+        join vintage_unit_gid using (id)
+  )
+  
+  , performance_event_gid as (
+     select
+        id,
+        gid,
+        event_date,",
+        if('event_weight' %in% PerformanceEventSQLNames) "event_weight" else "1::int"," as event_weight
+     from
+        vintage_unit_gid
+        join performance_event using (id)
+  )
+
+
   ,vintage_descriptors as (
     select
-      ",vGroups,"
+      gid,
       vintage_unit_date, 
       generate_series(date_trunc('",TimeGroup,"',vintage_unit_date),",TimeExpansionOut,",'",vTimeGroupInterval,"')::date as event_date,
       ", DistanceFunctionSchemaOut ,"time_distance(generate_series(date_trunc('",TimeGroup,"',vintage_unit_date),",TimeExpansionOut,",'",vTimeGroupInterval,"')::date, vintage_unit_date,'",TimeGroup,"') as distance
     from(
       select 
-        ",vGroups,"
-        vintage_unit_date, max_vintage_date
+        gid,
+        vintage_unit_date, 
+        max_vintage_date
       from 
-        vintage_unit ", localsql ,"group by 
-        ",vGroups,"
+        vintage_unit_gid ", localsql ,"group by 
+        gid,
         vintage_unit_date,
         max_vintage_date
     ) a
@@ -295,30 +333,30 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
   
   ,vintage_unit_sums as(
       select
-        ",vGroups,"
+        gid,
         vintage_unit_date, 
-        sum(",if('vintage_unit_weight' %in% VintageUnitSQLNames) "vintage_unit_weight" else "1::int",") as vintage_unit_weight,
+        sum(vintage_unit_weight) as vintage_unit_weight,
         count(*) as vintage_unit_count
       from
-        vintage_unit
+        vintage_unit_gid
       group by 
-        ",vGroups,"
+        gid,
         vintage_unit_date
   )
   
   ,performance_event_sums as(
       select
-        ",vGroups,"
-        vintage_unit_date, 
-        date_trunc('",TimeGroup,"',event_date)::date as event_date, 
-        sum(",if('event_weight' %in% PerformanceEventSQLNames) "event_weight" else "1::int",") as event_weight
+        vug.gid,
+        vug.vintage_unit_date, 
+        date_trunc('",TimeGroup,"',peg.event_date)::date as event_date, 
+        sum(peg.event_weight) as event_weight
       from
-        vintage_unit
-        join performance_event ve using (id)
+        vintage_unit_gid vug
+        join performance_event_gid peg using (id)
       group by 
-        ",vGroups," 
-        vintage_unit_date, 
-        date_trunc('",TimeGroup,"',event_date)::date
+        vug.gid,
+        vug.vintage_unit_date, 
+        date_trunc('",TimeGroup,"',peg.event_date)::date
   )
   
   ,vintage_csums as (
@@ -326,15 +364,15 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
         vd.*,
         vs.event_weight,
         sum(coalesce(event_weight,0)) 
-          over(partition by ",vGroups,"vintage_unit_date order by event_date) as event_weight_csum
+          over(partition by gid, vintage_unit_date order by event_date) as event_weight_csum
       from 
         vintage_descriptors vd
-        left join performance_event_sums vs using (",vGroups,"vintage_unit_date,event_date)
+        left join performance_event_sums vs using (gid, vintage_unit_date,event_date)
   )
 
   ,aggregation as (
      select
-       ",vGroups,"
+        vd.gid,
         vd.distance,
         sum(vintage_unit_weight) vintage_unit_weight,
         sum(vintage_unit_count) vintage_unit_count,
@@ -344,18 +382,29 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
         sum(coalesce(event_weight_csum,0))/sum(coalesce(vintage_unit_weight,0)) as event_weight_csum_pct
      from
         vintage_descriptors  vd
-        join vintage_unit_sums using  (",vGroups," vintage_unit_date)
-        left join vintage_csums using (",vGroups," vintage_unit_date, event_date)
+        join vintage_unit_sums using  (gid, vintage_unit_date)
+        left join vintage_csums using (gid, vintage_unit_date, event_date)
      group by
-        ",vGroups,"
+        vd.gid,
         vd.distance
-     order by
-        ",vGroups,"
-        distance
   ) 
 
-  select * , row_number() over(partition by ",vNonLast," distance order by ",vLast,") as rn from aggregation        
-             "
+
+  select 
+   ", vGroups ,"
+   distance, 
+   vintage_unit_weight, 
+   vintage_unit_count, 
+   event_weight, 
+   event_weight_pct, 
+   event_weight_csum, 
+   event_weight_csum_pct,
+   row_number() over(partition by gid) as rn 
+  from 
+   aggregation 
+   join vintage_unit_gid_descriptors using (gid)
+ order by
+  ",vGroups,"distance"
   ,sep="")
 
 if (Result=="data") {
