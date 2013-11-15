@@ -34,7 +34,6 @@ PrintVintageData <- function(VintageData,
                                                                 "rn"))]    
 
   if (length(DisplayVars)==0) {
-    cat("here")
     Out <- lapply(Columns, function(x) dcast(VintageData,as.formula("1 ~ distance"), value.var=x))              
   } else {
     Out <- lapply(Columns, function(x) dcast(VintageData,as.formula(paste(paste(DisplayVars,collapse="+"),"~ distance")), value.var=x))      
