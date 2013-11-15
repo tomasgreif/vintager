@@ -32,18 +32,26 @@ PrintVintageData <- function(VintageData,
   DisplayVars <- names(VintageData)[!(names(VintageData) %in% c("distance","vintage_unit_weight","vintage_unit_count","event_weight",
                                                                 "event_weight_pct","event_weight_csum","event_weight_csum_pct",
                                                                 "rn"))]    
+
+  if (length(DisplayVars)==0) {
+    cat("here")
+    Out <- lapply(Columns, function(x) dcast(VintageData,as.formula("1 ~ distance"), value.var=x))              
+  } else {
+    Out <- lapply(Columns, function(x) dcast(VintageData,as.formula(paste(paste(DisplayVars,collapse="+"),"~ distance")), value.var=x))      
+  }
+
   
-  Out <- lapply(Columns, function(x) dcast(VintageData,as.formula(paste(paste(DisplayVars,collapse="+"),"~ distance")), value.var=x))  
   names(Out) <- RawNames[(RawColumns %in% Columns)]
 
   require(WriteXLS)  
   
   if (Result=='xls') {
     if (Stacked) {
+
       dflc <- lapply(Out, function(x) {
         as.data.frame(sapply(x, function(y) {as.character(y)}),stringsAsFactors=FALSE)
       })
-      
+
       Out <- rbind.fill.matrix(lapply(names(dflc),
                                       function(x) {
                                         rbind(
