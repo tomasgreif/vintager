@@ -44,7 +44,7 @@ For additional details see help:
     library(devtools)
     runGitHub(repo="pgvintshiny",username="tomasgreif")  
 
-![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvintshiny-plot-vintage-data-in-shiny.png)
+![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvintshiny-plot-vintage-data-using-shiny-package.png)
 
 Note: `pgvintshiny` requires `shiny` package version 0.8 or higher.
 
