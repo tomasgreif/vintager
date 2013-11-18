@@ -37,6 +37,17 @@ For additional details see help:
     help(PrintVintageData)
     help(AggregateVintageData)
     help(CreateTimeDistanceFunction)
+    
+`pgvint` has cool `shiny` interface. If you have `VintageData` data frame in global environment, you can start `pgvintshiny` easily:
+
+    library(shiny)
+    library(devtools)
+    runGitHub(repo="pgvintshiny",username="tomasgreif")  
+
+![alt tag](http://www.analytikdat.cz/images/easyblog_images/923/20131020-get-vintage-data-postgresql-r/pgvintshiny-plot-vintage-data-in-shiny.png)
+
+Note: `pgvintshiny` requires `shiny` package version 0.8 or higher.
+
 
 ## Sample outputs
 
