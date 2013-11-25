@@ -311,7 +311,7 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
         join performance_event using (id)
   )
 
-
+  /* For every group (gid) generate vector of distances */
   ,vintage_descriptors as (
     select
       gid,
@@ -377,9 +377,11 @@ vSQL = paste(VintageUnitSQLOut,PerformanceEventSQL,
         sum(vintage_unit_weight) vintage_unit_weight,
         sum(vintage_unit_count) vintage_unit_count,
         sum(coalesce(event_weight,0)) as event_weight,
-        sum(coalesce(event_weight,0)) / sum(vintage_unit_weight) as event_weight_pct,
+        case when sum(coalesce(vintage_unit_weight,0)) = 0 then null else sum(coalesce(event_weight,0)) / sum(vintage_unit_weight) end as event_weight_pct,
+        --sum(coalesce(event_weight,0)) / sum(vintage_unit_weight)  as event_weight_pct,
         sum(coalesce(event_weight_csum,0)) as event_weight_csum,
-        sum(coalesce(event_weight_csum,0))/sum(coalesce(vintage_unit_weight,0)) as event_weight_csum_pct
+        case when sum(coalesce(vintage_unit_weight,0)) = 0 then null else sum(coalesce(event_weight_csum,0))/sum(coalesce(vintage_unit_weight,0)) end as event_weight_csum_pct
+        --sum(coalesce(event_weight_csum,0))/sum(coalesce(vintage_unit_weight,0))  as event_weight_csum_pct
      from
         vintage_descriptors  vd
         join vintage_unit_sums using  (gid, vintage_unit_date)
