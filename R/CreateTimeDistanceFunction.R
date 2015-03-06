@@ -2,28 +2,22 @@
 #'
 #' Creates time_distance function in given portfolio and optionally loads sample data.
 #'
-#' @param FunctionSchema Schema where \code{time_distance} function will be created. Default is \code{public}.
-#' @param Connection Connection to PostgreSQL database. Vector of exactly 5 elements in the following 
-#' order: \code{user, password, database name, host, port}.
-#' @param LoadData When true than tables \code{small_portfolio} and \code{big_portfolio} with sample data will be created.
-#' @param DataSchema Schema where sample tables should be created. Default is \code{public}.
+#' @param functionSchema Schema where \code{time_distance} function will be created. Default is \code{public}.
+#' @param con Connection to PostgreSQL database as produced by \code{dbConnect(...)}
+#' @param loadData When true than tables \code{small_portfolio} and \code{big_portfolio} with sample data will be created.
+#' @param dataSchema Schema where sample tables should be created. Default is \code{public}.
 #' @examples  \dontrun{
-#' Connection <- c('user','password','database','host','port')
-#' CreateTimeDistanceFunction(Connection=Connection,LoadData=TRUE)
+#' drv <- dbDriver("PostgreSQL")
+#' pgCon <- dbConnect(drv, user = 'usr', dbname="db", password = 'secret', host = 'localhost', port = 5432)
+#' createTimeDistanceFunction(con = pgCon, loadData = TRUE)
 #' }
 #' @export 
 
-CreateTimeDistanceFunction <- function(FunctionSchema="public",Connection,LoadData=FALSE,DataSchema="public") {
-
-  options(sqldf.RPostgreSQL.user      = Connection[1], 
-          sqldf.RPostgreSQL.password  = Connection[2],
-          sqldf.RPostgreSQL.dbname    = Connection[3],
-          sqldf.RPostgreSQL.host      = Connection[4], 
-          sqldf.RPostgreSQL.port      = Connection[5])
+createTimeDistanceFunction <- function(functionSchema="public", con, 
+                                       loadData = FALSE, dataSchema = "public") {
   
-
-TimeDistanceFunction <- paste("
-CREATE OR REPLACE FUNCTION ",FunctionSchema,".time_distance(to_date date, from_date date, granularity varchar)
+timeDistanceFunction <- paste0("
+CREATE OR REPLACE FUNCTION ", functionSchema, ".time_distance(to_date date, from_date date, granularity varchar)
   RETURNS integer AS
 $BODY$
 
@@ -47,22 +41,23 @@ begin
 end;
 $BODY$
   LANGUAGE plpgsql IMMUTABLE COST 100;
-  ",sep="")
-sqldf(TimeDistanceFunction)
+")
 
-if(LoadData) {
-  sqldf(paste("drop table if exists ",DataSchema,".small_portfolio;
-        CREATE TABLE ",DataSchema,".small_portfolio
+sqldf(timeDistanceFunction, connection = con)
+
+if(loadData) {
+  sqldf(paste("drop table if exists ", dataSchema,".small_portfolio;
+        CREATE TABLE ", dataSchema,".small_portfolio
         (
           id serial NOT NULL,
           product character varying,
           origination_date date,
           repayment_date date,
           CONSTRAINT id_small_pkey PRIMARY KEY (id)
-        );",sep=""))
+        );",sep=""), connection = con)
 
-  sqldf(paste("drop table if exists ",DataSchema,".big_portfolio;
-        CREATE TABLE ",DataSchema,".big_portfolio
+  sqldf(paste("drop table if exists ", dataSchema,".big_portfolio;
+        CREATE TABLE ", dataSchema,".big_portfolio
         (
           id serial NOT NULL,
           origination_date date,
@@ -71,11 +66,12 @@ if(LoadData) {
           region character varying,
           repayment_date date,
           CONSTRAINT id_big_pkey PRIMARY KEY (id)
-        );",sep=""))
-  data(BigPortfolio,package="pgvint",envir = environment())
-  data(SmallPortfolio,package="pgvint",envir = environment())
-  sqldf(paste("insert into ",DataSchema,".",BigPortfolio,collapse="",sep=""))
-  sqldf(paste("insert into ",DataSchema,".",SmallPortfolio,collapse="",sep=""))
+        );",sep=""), connection = con)
+  
+  data(bigPortfolio, package="vintager", envir = environment())
+  data(smallPortfolio, package="vintager",envir = environment())
+  sqldf(paste("insert into ", dataSchema,".", bigPortfolio, collapse="", sep=""), connection = con)
+  sqldf(paste("insert into ", dataSchema,".", smallPortfolio, collapse="", sep=""), connection = con)
 }
 
 }

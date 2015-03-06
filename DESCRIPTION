@@ -1,6 +1,6 @@
-Package: pgvint
-Title: Vintage Analysis for PostgreSQL Data
-Description: Vintage analysis for data stored in PostgreSQL database.
+Package: vintager
+Title: Vintage Analysis for data in Oracle/PostgreSQL
+Description: Vintage analysis for data stored in PostgreSQL or Oracle database. Vintage analysis is frequently used analysis of credit portfolio performance. However, the underlying theory is applicable to any domain, e.g. to cohort analysis of any process where performance is tracked over time.
 Version: 0.1
 Author: Tomas Greif
 Maintainer: Tomas Greif <greif.tomas@gmail.com>
@@ -11,17 +11,6 @@ LazyData: true
 Imports:
     ggplot2,
     sqldf,
-    RPostgreSQL,
     reshape2,
     WriteXLS,
     plyr
-Collate:
-    'GetVintageData.R'
-    'PlotVintageData.R'
-    'pgvint-package.r'
-    'CreateTimeDistanceFunction.R'
-    'PrintVintageData.R'
-    'BigPortfolio.R'
-    'SmallPortfolio.R'
-    'AggregateVintageData.R'
-    'VintageData.R'

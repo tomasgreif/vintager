@@ -4,20 +4,25 @@
 #' to be included in plot definition.
 #'
 #' @param data Result of \code{GetVintageData} function.
-#' @param x Data to be displayed on \code{x} axis. Default is distance
+#' @param x Data to be displayed on \code{x} axis. Default is \code{distance}.
 #' @param y Data to be displayed on \code{y} axis. Default is \code{event_weight_csum_pct}.
 #' @param cond Variable to be used for conditioning (in-chart group).
 #' @param facets Formulat to be used for facetting.
+#' @examples
+#' plotVintageData(vintageData, facets='product~region')
+#' plotVintageData(vintageData, cond = 'origination_month', facets='product~region')
+#' plotVintageData(vintageData, cond = 'origination_month', facets='region~product')
+#' plotVintageData(vintageData, x = 'origination_month', cond = 'distance', 
+#'                 facets='region~product')
 #' @export 
 
 
-PlotVintageData <- function(data=NULL,x="distance",y="event_weight_csum_pct",cond=NULL,facets=NULL) {
-  
-  #require(ggplot2)
+plotVintageData <- function(data = NULL, x = "distance", y = "event_weight_csum_pct",
+                            cond = NULL , facets = NULL) {
   
   `%ni%` <- Negate(`%in%`)
 
-  DisplayVars <- names(data)[!(names(data) %in% c("distance","vintage_unit_weight","vintage_unit_count","event_weight",
+  displayVars <- names(data)[!(names(data) %in% c("distance","vintage_unit_weight","vintage_unit_count","event_weight",
                                                                 "event_weight_pct","event_weight_csum","event_weight_csum_pct",
                                                                 "rn"))]  
   for (col in names(data)) {
