@@ -27,7 +27,7 @@ if (!is.null(sqlModifier)) {
 
 sql <- limitDb(con, vintageUnitSqlOut)
 if (debug) message(sql)
-vintageUnitSqlNames <- names(sqldf(sql, connection = con))
+vintageUnitSqlNames <- names(dbGetQuery(con, sql))
 
 
 if (!any(toupper(vintageUnitSqlNames) %in% 'ID')) {
@@ -39,7 +39,7 @@ if (!any(toupper(vintageUnitSqlNames) %in% 'ID')) {
 # Test whether PerformanceEventSQL contains at least id, event_date
 sql <- limitDb(con, performanceEventSql)
 if(debug) message(sql)
-performanceEventSqlNames <- names(sqldf(sql, connection = con))
+performanceEventSqlNames <- names(dbGetQuery(con, sql))
 
 if (!any(toupper(performanceEventSqlNames) %in% 'ID')) {
   stop ('vintageUnitSql does not contain column "id".')
@@ -297,7 +297,7 @@ vSQL <- paste(vintageUnitSqlOut, performanceEventSql,
 
 
 if (result=="data") {
-    sqldf(vSQL, connection = con) 
+    dbGetQuery(con, vSQL) 
   } else if (result=="sql") {
       cat(vSQL)
   }  else {
