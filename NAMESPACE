@@ -2,6 +2,7 @@
 
 export(aggregateVintageData)
 export(createTimeDistanceFunction)
+export(loadSampleData)
 export(plotVintageData)
 export(printVintageData)
 import(WriteXLS)
