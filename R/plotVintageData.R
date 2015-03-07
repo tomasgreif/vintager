@@ -21,11 +21,15 @@ plotVintageData <- function(data = NULL, x = "distance", y = "event_weight_csum_
                             cond = NULL , facets = NULL) {
   
   `%ni%` <- Negate(`%in%`)
+  
+  dataNames <- toupper(names(data))
+  x <- toupper(x)
+  y <- toupper(y)
 
-  displayVars <- names(data)[!(names(data) %in% c("distance","vintage_unit_weight","vintage_unit_count","event_weight",
+  displayVars <- dataNames[!(dataNames %in% c("distance","vintage_unit_weight","vintage_unit_count","event_weight",
                                                                 "event_weight_pct","event_weight_csum","event_weight_csum_pct",
                                                                 "rn"))]  
-  for (col in names(data)) {
+  for (col in dataNames) {
     if (class(data[[col]])[1] %in% c("Date",'POSIXct','POSIXt')) {
       data[[col]] <- as.factor(data[[col]])
     }
@@ -33,11 +37,11 @@ plotVintageData <- function(data = NULL, x = "distance", y = "event_weight_csum_
   
   BasicPlot <- ggplot(data, aes_string(x=x, y=y))
   
-  if (x %ni% names(data)) stop (paste("Variable",x,"is not in data frame."))
-  if (y %ni% names(data)) stop (paste("Variable",y,"is not in data frame."))
+  if (x %ni% dataNames) stop (paste("Variable",x,"is not in data frame."))
+  if (y %ni% dataNames) stop (paste("Variable",y,"is not in data frame."))
   if (length(cond)>1) stop (paste("Only one variable can be specified for conditioning."))
   if (length(cond)==1) {
-    if (cond %ni% names(data)) stop (paste("Conditioning variable",cond,"is not in data frame."))
+    if (cond %ni% dataNames) stop (paste("Conditioning variable",cond,"is not in data frame."))
   }
   if(!is.null(facets) ) {
     # add sanity check
